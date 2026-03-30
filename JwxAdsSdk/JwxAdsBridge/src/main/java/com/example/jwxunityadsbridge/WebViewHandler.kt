@@ -12,7 +12,7 @@ class WebViewHandler(private val activity: Activity) {
     private var webView: WebView? = null
 
     @SuppressLint("SetJavaScriptEnabled")
-    fun showHelloWorld() {
+    public fun load() {
         activity.runOnUiThread {
             if (webView != null) return@runOnUiThread
 
@@ -81,7 +81,11 @@ class WebViewHandler(private val activity: Activity) {
                     null
                 )
             }
+        }
+    }
 
+    public fun render() {
+        activity.runOnUiThread {
             activity.addContentView(
                 webView,
                 FrameLayout.LayoutParams(
