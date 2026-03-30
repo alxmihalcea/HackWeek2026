@@ -1,6 +1,6 @@
 package com.example.jwxunityadsbridge
 
-import kotlinx.coroutines.*
+import com.unity3d.player.UnityPlayer
 
 interface AdsListener {
     fun onInitialized()
@@ -11,6 +11,7 @@ interface AdsListener {
     fun onRewardedFailedToShow(error: String)
     fun onRewardedClosed()
     fun onRewardedEarned()
+    fun onLog(message: String)
 }
 
 class AdsBridge {
@@ -19,6 +20,8 @@ class AdsBridge {
         private var loadedPlacementId: String? = null
         private var listener: AdsListener? = null
 
+        private var rewardedWebViewHandler: WebViewHandler? = null
+
         @JvmStatic
         fun setListener(adsListener: AdsListener?) {
             listener = adsListener
@@ -26,7 +29,13 @@ class AdsBridge {
 
         @JvmStatic
         fun initialize(appId: String) {
+            sendLog("initialization started")
+
+            val activity = UnityPlayer.currentActivity ?: return
+            rewardedWebViewHandler = WebViewHandler(activity)
+
             initialized = appId.isNotBlank()
+
             if (initialized) {
                 android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                     listener?.onInitialized()
@@ -68,6 +77,13 @@ class AdsBridge {
                 listener?.onRewardedFailedToShow(error)
                 return
             }
+            if (rewardedWebViewHandler == null) {
+                val erorr = "Show failed: WebView not initialized"
+                listener?.onRewardedFailedToShow(erorr)
+                return
+            }
+
+            rewardedWebViewHandler!!.showHelloWorld();
 
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 listener?.onRewardedShown()
@@ -78,6 +94,10 @@ class AdsBridge {
                 listener?.onRewardedEarned()
                 listener?.onRewardedClosed()
             }, 5000L)
+        }
+
+        fun sendLog(message: String) {
+            listener?.onLog(message)
         }
     }
 }
