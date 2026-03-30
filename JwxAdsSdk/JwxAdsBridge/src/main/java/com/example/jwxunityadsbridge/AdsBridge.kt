@@ -1,7 +1,6 @@
 package com.example.jwxunityadsbridge
 
 import android.app.Activity
-import com.unity3d.player.UnityPlayer
 
 interface AdsListener {
     fun onInitialized()
