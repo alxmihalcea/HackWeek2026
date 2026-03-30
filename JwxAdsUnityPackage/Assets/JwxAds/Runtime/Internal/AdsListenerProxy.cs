@@ -22,7 +22,7 @@ public class AdsListenerProxy : AndroidJavaProxy
         manager.HandleInitializationFailed(error);
     }
 
-    public void onRewardedLoaded(string placementId)
+    public void onRewardedLoaded()
     {
         manager.HandleRewardedLoaded();
     }
@@ -32,7 +32,7 @@ public class AdsListenerProxy : AndroidJavaProxy
         manager.HandleRewardedFailedToLoad(error);
     }
 
-    public void onRewardedShown(string placementId)
+    public void onRewardedShown()
     {
         manager.HandleRewardedShown();
     }
@@ -42,12 +42,12 @@ public class AdsListenerProxy : AndroidJavaProxy
         manager.HandleRewardedFailedToShow(error);
     }
 
-    public void onRewardedClosed(string placementId)
+    public void onRewardedClosed()
     {
         manager.HandleRewardedClosed();
     }
 
-    public void onRewardedEarned(string placementId)
+    public void onRewardedEarned()
     {
         manager.HandleRewardedEarned();
     }

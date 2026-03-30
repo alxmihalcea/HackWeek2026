@@ -11,6 +11,9 @@ public class JwxAdsManager : MonoBehaviour
     [Header("Placements")]
     [SerializeField] private string rewardedPlacementId = "rewarded-demo";
 
+    [Header("Debug")]
+    [SerializeField] private bool debugLogging = false;
+
     public static JwxAdsManager Instance { get; private set; }
 
     public static event Action OnInitialized;
@@ -61,50 +64,49 @@ public class JwxAdsManager : MonoBehaviour
         }
     }
 
-    public static bool InitializeAds()
+    public static void InitializeAds()
     {
         if (Instance == null)
         {
             JwxAdsOnScreenLogger.LogError("JwxAds: No instance found. Add JwxAds to a GameObject in the scene.");
-            return false;
+            return;
         }
 
-        return Instance.Initialize();
+        Instance.Initialize();
     }
 
-    public static bool LoadRewardedAd()
+    public static void LoadRewardedAd()
     {
         if (Instance == null)
         {
             JwxAdsOnScreenLogger.LogError("JwxAds: No instance found. Add JwxAds to a GameObject in the scene.");
-            return false;
+            return;
         }
 
-        return Instance.LoadRewardedAdInternal();
+        Instance.LoadRewardedAdInternal();
     }
 
-    public static bool ShowRewardedAd()
+    public static void ShowRewardedAd()
     {
         if (Instance == null)
         {
             JwxAdsOnScreenLogger.LogError("JwxAds: No instance found. Add JwxAds to a GameObject in the scene.");
-            return false;
+            return;
         }
 
-        return Instance.ShowRewardedAdInternal();
+        Instance.ShowRewardedAdInternal();
     }
 
-    public bool Initialize()
+    public void Initialize()
     {
-        if (AndroidAdsBridge.TryCallBridge("initialize", appId, out string errorMessage))
+        using var activity = AndroidAdsBridge.GetCurrentActivity();
+        if (AndroidAdsBridge.TryCallBridge("initialize", out string errorMessage, appId, activity))
         {
             SetMessage("Initialize call sent", false);
-            return true;
+            return;
         }
 
         SetMessage("ERROR: " + errorMessage, true);
-        RaiseInitializationFailed(errorMessage);
-        return false;
     }
 
     public void HandleRewardedClosed()
@@ -157,52 +159,42 @@ public class JwxAdsManager : MonoBehaviour
         RaiseInitializationFailed(errorMessage);
     }
 
-    private bool LoadRewardedAdInternal()
+    private void LoadRewardedAdInternal()
     {
-        if (!EnsureInitialized())
+        if (!isInitialized)
         {
-            return false;
+            SetMessage("SDK not initialized yet. Sending initialize call.", true);
+            Initialize();
+            return;
         }
 
         string resolvedPlacementId = rewardedPlacementId;
-        if (AndroidAdsBridge.TryCallBridge("loadRewarded", resolvedPlacementId, out string errorMessage))
+        if (AndroidAdsBridge.TryCallBridge("loadRewarded", out string errorMessage, resolvedPlacementId))
         {
             SetMessage("Load rewarded call sent", false);
-            return true;
+            return;
         }
 
         SetMessage("ERROR: " + errorMessage, true);
-        RaiseRewardedFailedToLoad(errorMessage);
-        return false;
     }
 
-    private bool ShowRewardedAdInternal()
+    private void ShowRewardedAdInternal()
     {
-        if (!EnsureInitialized())
+        if (!isInitialized)
         {
-            return false;
+            SetMessage("SDK not initialized yet. Sending initialize call.", true);
+            Initialize();
+            return;
         }
 
         string resolvedPlacementId = rewardedPlacementId;
-        if (AndroidAdsBridge.TryCallBridge("showRewarded", resolvedPlacementId, out string errorMessage))
+        if (AndroidAdsBridge.TryCallBridge("showRewarded", out string errorMessage, resolvedPlacementId))
         {
             SetMessage("Show rewarded call sent", false);
-            return true;
+            return;
         }
 
         SetMessage("ERROR: " + errorMessage, true);
-        RaiseRewardedFailedToShow(errorMessage);
-        return false;
-    }
-
-    private bool EnsureInitialized()
-    {
-        if (isInitialized)
-        {
-            return true;
-        }
-
-        return Initialize();
     }
 
     private void RaiseInitialized()
@@ -247,6 +239,11 @@ public class JwxAdsManager : MonoBehaviour
 
     private void SetMessage(string message, bool isError)
     {
+        if (!debugLogging)
+        {
+            return;
+        }
+
         if (isError)
         {
             JwxAdsOnScreenLogger.LogError(message);
