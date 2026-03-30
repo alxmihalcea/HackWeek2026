@@ -51,5 +51,10 @@ public class AdsListenerProxy : AndroidJavaProxy
     {
         manager.HandleRewardedEarned();
     }
+
+    public void onLog(string message)
+    {
+        manager.HandleLog(message);
+    }
 }
 }

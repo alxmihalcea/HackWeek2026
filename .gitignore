@@ -9,18 +9,15 @@
 [Ll]ogs/
 [Uu]ser[Ss]ettings/
 [Mm]emoryCaptures/
-
-# AssetStore tools
 AssetStoreTools/
-
-# Rider/JetBrains
-.idea/
-
-# VS Code
-.vscode/
-
-# Crash reports
 sysinfo.txt
+
+# Unity generated files
+*.csproj
+*.unityproj
+*.sln
+*.user
+*.userprefs
 
 # --- Android / Gradle ---
 .gradle/
@@ -32,16 +29,22 @@ local.properties
 *.iml
 
 # Android Studio
-.idea/
 .navigation/
 captures/
+
+# Signing / packaged outputs
 *.jks
 *.keystore
 *.apk
 *.aab
 *.ap_
 
-# OS
+# --- IDEs ---
+.idea/
+.vscode/
+.vs/
+
+# --- OS files ---
 Thumbs.db
 Desktop.ini
 .DS_Store
