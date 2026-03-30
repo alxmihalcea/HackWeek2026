@@ -28,8 +28,9 @@ class AdsBridge {
         fun initialize(appId: String) {
             initialized = appId.isNotBlank()
             if (initialized) {
-                listener?.onInitialized()
-
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                    listener?.onInitialized()
+                }, 2000L)
             } else {
                 val error = "Initialization failed: appId is empty"
                 listener?.onInitializationFailed(error)
@@ -68,10 +69,15 @@ class AdsBridge {
                 return
             }
 
-            listener?.onRewardedShown()
-            // Simulare pentru demo
-            listener?.onRewardedEarned()
-            listener?.onRewardedClosed()
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                listener?.onRewardedShown()
+            }, 2000L)
+
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                // Simulare pentru demo
+                listener?.onRewardedEarned()
+                listener?.onRewardedClosed()
+            }, 5000L)
         }
     }
 }
