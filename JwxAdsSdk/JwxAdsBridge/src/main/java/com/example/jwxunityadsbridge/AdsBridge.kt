@@ -1,5 +1,7 @@
 package com.example.jwxunityadsbridge
 
+import kotlinx.coroutines.*
+
 interface AdsListener {
     fun onInitialized()
     fun onInitializationFailed(error: String)
@@ -47,7 +49,10 @@ class AdsBridge {
                 return
             }
             loadedPlacementId = placementId
-            listener?.onRewardedLoaded()
+
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                listener?.onRewardedLoaded()
+            }, 2000L)
         }
 
         @JvmStatic
