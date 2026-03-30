@@ -8,8 +8,17 @@ import android.webkit.WebView
 import android.widget.FrameLayout
 import android.webkit.JavascriptInterface
 
+interface WebViewListener {
+    fun onWebViewLoaded()
+}
+
 class WebViewHandler(private val activity: Activity) {
     private var webView: WebView? = null
+    private var listener: WebViewListener? = null
+
+    public fun setListener(listener: WebViewListener) {
+        this.listener = listener
+    }
 
     @SuppressLint("SetJavaScriptEnabled")
     public fun load() {
@@ -82,6 +91,9 @@ class WebViewHandler(private val activity: Activity) {
                 )
             }
         }
+
+        // TODO this event should wait for the sax sdk to be initialised and the ad to be loaded once we have sax sdk implemented
+        listener?.onWebViewLoaded()
     }
 
     public fun render() {
