@@ -10,14 +10,14 @@ namespace JwxAdsSDK
         private const string NotRunningOnAndroidMessage = "Not running on Android device";
 
         public static string ListenerInterfaceName => AdsListenerInterfaceName;
-        public static bool TryCallBridge(string methodName, string argument, out string errorMessage)
+        public static bool TryCallBridge(string methodName, out string errorMessage, params object[] arguments)
         {
     #if UNITY_ANDROID && !UNITY_EDITOR
             try
             {
                 using var adsBridgeClass = new AndroidJavaClass(AdsBridgeClassName);
                 errorMessage = null;
-                adsBridgeClass.CallStatic(methodName, argument);
+                adsBridgeClass.CallStatic(methodName, arguments);
                 return true;
             }
             catch (Exception e)
@@ -30,6 +30,17 @@ namespace JwxAdsSDK
             return false;
     #endif
         }
+
+        public static AndroidJavaObject GetCurrentActivity()
+        {
+#if UNITY_ANDROID && !UNITY_EDITOR
+            using var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+            return unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+#else
+            return null;
+#endif
+        }
+
 
         public static void RegisterListener(AdsListenerProxy proxy)
         {

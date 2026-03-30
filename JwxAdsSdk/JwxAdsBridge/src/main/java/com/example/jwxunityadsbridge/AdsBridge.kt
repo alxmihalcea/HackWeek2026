@@ -1,5 +1,6 @@
 package com.example.jwxunityadsbridge
 
+import android.app.Activity
 import com.unity3d.player.UnityPlayer
 
 interface AdsListener {
@@ -11,6 +12,11 @@ interface AdsListener {
     fun onRewardedFailedToShow(error: String)
     fun onRewardedClosed()
     fun onRewardedEarned()
+    fun onInterstitialLoaded()
+    fun onInterstitialFailedToLoad(error: String)
+    fun onInterstitialShown()
+    fun onInterstitialFailedToShow(error: String)
+    fun onInterstitialClosed()
     fun onLog(message: String)
 }
 
@@ -20,6 +26,7 @@ class AdsBridge {
         private var loadedPlacementId: String? = null
         private var listener: AdsListener? = null
 
+        private var activity: Activity? = null
         private var rewardedWebViewHandler: WebViewHandler? = null
 
         @JvmStatic
@@ -28,10 +35,10 @@ class AdsBridge {
         }
 
         @JvmStatic
-        fun initialize(appId: String) {
+        fun initialize(appId: String, activity: Activity) {
             sendLog("initialization started")
 
-            val activity = UnityPlayer.currentActivity ?: return
+            Companion.activity = activity
             rewardedWebViewHandler = WebViewHandler(activity)
 
             initialized = appId.isNotBlank()
@@ -93,6 +100,55 @@ class AdsBridge {
                 // Simulare pentru demo
                 listener?.onRewardedEarned()
                 listener?.onRewardedClosed()
+            }, 5000L)
+        }
+
+        @JvmStatic
+        fun loadInterstitial(placementId: String) {
+            if (!initialized) {
+                val error = "Load failed: SDK not initialized"
+                listener?.onInterstitialFailedToLoad(error)
+                return
+            }
+            if (placementId.isBlank()) {
+                val error = "Load failed: placementId is empty"
+                listener?.onInterstitialFailedToLoad(error)
+                return
+            }
+            loadedPlacementId = placementId
+
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                listener?.onInterstitialLoaded()
+            }, 2000L)
+        }
+
+        @JvmStatic
+        fun showInterstitial(placementId: String) {
+            if (!initialized) {
+                val error = "Show failed: SDK not initialized"
+                listener?.onInterstitialFailedToShow(error)
+                return
+            }
+            if (loadedPlacementId != placementId) {
+                val error = "Show failed: placement not loaded"
+                listener?.onInterstitialFailedToShow(error)
+                return
+            }
+            if (rewardedWebViewHandler == null) {
+                val erorr = "Show failed: WebView not initialized"
+                listener?.onInterstitialFailedToShow(erorr)
+                return
+            }
+
+            rewardedWebViewHandler!!.showHelloWorld();
+
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                listener?.onInterstitialShown()
+            }, 2000L)
+
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                // Simulare pentru demo
+                listener?.onInterstitialClosed()
             }, 5000L)
         }
 
