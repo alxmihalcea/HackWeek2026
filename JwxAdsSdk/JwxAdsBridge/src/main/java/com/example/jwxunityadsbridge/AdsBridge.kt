@@ -28,6 +28,7 @@ class AdsBridge {
 
         private var activity: Activity? = null
         private var rewardedWebViewHandler: WebViewHandler? = null
+        private var interstitialWebViewHandler: WebViewHandler? = null
 
         @JvmStatic
         fun setListener(adsListener: AdsListener?) {
@@ -40,6 +41,7 @@ class AdsBridge {
 
             Companion.activity = activity
             rewardedWebViewHandler = WebViewHandler(activity)
+            interstitialWebViewHandler = WebViewHandler(activity)
 
             initialized = appId.isNotBlank()
 
@@ -65,7 +67,14 @@ class AdsBridge {
                 listener?.onRewardedFailedToLoad(error)
                 return
             }
+            if (rewardedWebViewHandler == null) {
+                val error = "Load failed: WebView not initialized"
+                listener?.onRewardedFailedToLoad(error)
+                return;
+            }
+
             loadedPlacementId = placementId
+            rewardedWebViewHandler!!.load()
 
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 listener?.onRewardedLoaded()
@@ -85,12 +94,12 @@ class AdsBridge {
                 return
             }
             if (rewardedWebViewHandler == null) {
-                val erorr = "Show failed: WebView not initialized"
-                listener?.onRewardedFailedToShow(erorr)
+                val error = "Show failed: WebView not initialized"
+                listener?.onRewardedFailedToShow(error)
                 return
             }
 
-            rewardedWebViewHandler!!.showHelloWorld();
+            rewardedWebViewHandler!!.render()
 
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 listener?.onRewardedShown()
@@ -115,7 +124,14 @@ class AdsBridge {
                 listener?.onInterstitialFailedToLoad(error)
                 return
             }
+            if (interstitialWebViewHandler == null) {
+                val error = "Load failed: WebView not initialized"
+                listener?.onRewardedFailedToLoad(error)
+                return;
+            }
+
             loadedPlacementId = placementId
+            interstitialWebViewHandler!!.load()
 
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 listener?.onInterstitialLoaded()
@@ -134,13 +150,13 @@ class AdsBridge {
                 listener?.onInterstitialFailedToShow(error)
                 return
             }
-            if (rewardedWebViewHandler == null) {
-                val erorr = "Show failed: WebView not initialized"
-                listener?.onInterstitialFailedToShow(erorr)
+            if (interstitialWebViewHandler == null) {
+                val error = "Show failed: WebView not initialized"
+                listener?.onInterstitialFailedToShow(error)
                 return
             }
 
-            rewardedWebViewHandler!!.showHelloWorld();
+            interstitialWebViewHandler!!.render();
 
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 listener?.onInterstitialShown()
