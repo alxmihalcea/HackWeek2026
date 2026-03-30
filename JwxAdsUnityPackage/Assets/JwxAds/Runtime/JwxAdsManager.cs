@@ -157,6 +157,11 @@ public class JwxAdsManager : MonoBehaviour
         RaiseInitializationFailed(errorMessage);
     }
 
+    public void HandleLog(string message)
+    {
+        SetMessage($"Event: Log: {message}", false);
+    }
+
     private bool LoadRewardedAdInternal()
     {
         if (!EnsureInitialized())
