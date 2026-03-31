@@ -21,6 +21,11 @@
   >
     <h1>Hello World!</h1>
 
+    <div
+      id="ad-container"
+      style="width: 200px; height: 100px; background-color: gray"
+    ></div>
+
     <button
       id="close-button"
       onclick="closeAd()"
@@ -52,13 +57,7 @@
           closeButton.style.display = "block";
         }
       }
-
-      const logs = document.getElementById("logs");
-      logs.innerHTML = "Logs:\n";
-
-      const adsSdk = window.cnxAdsSdk;
-      const serialized = JSON.stringify(adsSdk);
-      logs.innerHTML += `Serialized: ${serialized}\n`;
     </script>
+    <script src="adServerSdkHandler.js"></script>
   </body>
 </html>

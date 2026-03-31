@@ -88,5 +88,10 @@ class WebViewHandler(private val activity: Activity) {
         fun closeWebView() {
             close()
         }
+
+        @JavascriptInterface
+        fun onWebviewError(error: String) {
+            TODO("Handle webview error")
+        }
     }
 }

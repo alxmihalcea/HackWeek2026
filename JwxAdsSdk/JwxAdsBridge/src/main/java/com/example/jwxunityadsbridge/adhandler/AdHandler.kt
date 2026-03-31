@@ -43,5 +43,6 @@ open class AdHandler(activity: Activity) : WebViewListener {
 
     override fun onWebViewLoaded() {
         isWebViewLoaded = true
+        listeners.forEach { it.onAdLoaded() }
     }
 }
