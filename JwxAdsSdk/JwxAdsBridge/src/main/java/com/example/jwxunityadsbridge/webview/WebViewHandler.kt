@@ -124,6 +124,8 @@ class WebViewHandler(private val activity: Activity) {
             )
             currentWebView.visibility = View.VISIBLE
             currentWebView.bringToFront()
+
+            webView?.evaluateJavascript("startAdBreak()", null)
         }
     }
 
@@ -147,6 +149,7 @@ class WebViewHandler(private val activity: Activity) {
                 (it.parent as? ViewGroup)?.removeView(it)
                 it.destroy()
             }
+
             webView = null
             isPageLoaded = false
             listener?.onWebviewClosed()
