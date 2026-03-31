@@ -73,6 +73,13 @@ class WebViewHandler(private val activity: Activity) {
         }
     }
 
+    public fun showSkipButton() {
+        activity.runOnUiThread {
+            if (!isPageLoaded) return@runOnUiThread
+            webView?.evaluateJavascript("showSkipButton", null)
+        }
+    }
+
     fun close() {
         activity.runOnUiThread {
             webView?.let {
