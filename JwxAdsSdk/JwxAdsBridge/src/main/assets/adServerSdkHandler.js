@@ -21,7 +21,7 @@
                     id: '84805da0-273b-414e-8c90-2a25b86e349e',
                     cpm: 0.01,
                     floorPrice: 0.01,
-                    url: 'https://assets.connatix.com/Elements/6dce5bde-736d-4f6b-88b7-ece3af19c862/Vast_-_15_Seconds.xml?isGdpr=[GDPR]&gdprPayload=[GDPR_CONSENT]&consent=[CONSENT]'
+                    url: 'https://assets.connatix.com/Elements/0a34019a-f275-4aac-a280-55114dffd5e4/Vast_30s.xml'
                 }
             ],
             blockConnatixDemand: false
