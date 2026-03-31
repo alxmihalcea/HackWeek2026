@@ -321,14 +321,9 @@ public static class AdsManager
 
     private static void FinishInterstitialFlow()
     {
-        if (!isShowingInterstitial)
-        {
-            return;
-        }
-
-        isShowingInterstitial = false;
         var callback = pendingInterstitialComplete;
         pendingInterstitialComplete = null;
+        isShowingInterstitial = false;
         callback?.Invoke();
     }
 }
