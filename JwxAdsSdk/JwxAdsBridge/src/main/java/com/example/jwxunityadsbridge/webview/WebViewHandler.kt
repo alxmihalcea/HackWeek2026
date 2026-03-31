@@ -43,74 +43,14 @@ class WebViewHandler(private val activity: Activity) {
                 webViewClient = object : WebViewClient() {
                     override fun onPageFinished(view: WebView?, url: String?) {
                         isPageLoaded = true
+                        // TODO this event should wait for the sax sdk to be initialised and the ad to be loaded once we have sax sdk implemented
+                        listener?.onWebViewLoaded()
                     }
                 }
 
-                loadDataWithBaseURL(
-                    null,
-                    """
-                    <html>
-                        <head>
-                            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                        </head>
-                        <body style="
-                            margin:0;
-                            display:flex;
-                            flex-direction: column;
-                            justify-content:center;
-                            align-items:center;
-                            gap: 100px;
-                            height:100vh;
-                            background:white;
-                            font-family:sans-serif;
-                            position:relative;
-                        ">
-                            
-
-                            <h1>Hello World!</h1>
-                            
-                            <button
-                                id="close-button"
-                                onclick="closeAd()"
-                                style="
-                                    border: 4px solid black;
-                                    border-radius: 10px;
-                                    padding: 10px 20px;
-                                    background-color: white;
-                                    font-size: 18px;
-                                    font-weight: 500;
-                                    display: none
-                                "
-                            >
-                                Close
-                            </button>
-
-                            <script>
-                                function closeAd() {
-                                    if (window.AndroidBridge && window.AndroidBridge.closeWebView) {
-                                        window.AndroidBridge.closeWebView();
-                                    }
-                                }
-                                
-                                function showCloseButton() {
-                                    const closeButton = document.getElementById("close-button")
-                                    if (closeButton) {
-                                        closeButton.style.display = "block"
-                                    }
-                                }
-                            </script>
-                        </body>
-                    </html>
-                    """.trimIndent(),
-                    "text/html",
-                    "UTF-8",
-                    null
-                )
+                loadUrl("file:///android_asset/index.html")
             }
         }
-
-        // TODO this event should wait for the sax sdk to be initialised and the ad to be loaded once we have sax sdk implemented
-        listener?.onWebViewLoaded()
     }
 
     public fun render() {
