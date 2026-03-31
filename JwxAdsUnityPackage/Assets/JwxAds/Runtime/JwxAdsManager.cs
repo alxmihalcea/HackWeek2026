@@ -58,11 +58,6 @@ namespace JwxAdsSDK
             DontDestroyOnLoad(gameObject);
         }
 
-        private void Start()
-        {
-            Initialize();
-        }
-
         private void OnDestroy()
         {
             if (Instance == this)

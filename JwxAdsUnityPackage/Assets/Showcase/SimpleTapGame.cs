@@ -404,6 +404,8 @@ public class SimpleTapGame : MonoBehaviour
             remainingTime = Mathf.Max(0f, roundDurationSeconds);
             isGameOver = false;
             rewardedContinueUsed = false;
+            hasRewardedAvailability = false;
+            lastRewardedAvailable = false;
 
             if (gameOverRoot != null)
             {
