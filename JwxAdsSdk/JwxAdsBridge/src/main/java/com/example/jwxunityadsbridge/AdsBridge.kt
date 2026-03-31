@@ -132,7 +132,7 @@ class AdsBridge {
             }
             if (interstitialHandler == null) {
                 val error = "Load failed: WebView not initialized"
-                listener?.onRewardedFailedToLoad(error)
+                listener?.onInterstitialFailedToLoad(error)
                 return;
             }
 
