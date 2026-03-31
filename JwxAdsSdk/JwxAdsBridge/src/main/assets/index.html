@@ -12,34 +12,52 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      gap: 100px;
+      width: 100vw;
       height: 100vh;
-      background: white;
+      background: black;
       font-family: sans-serif;
       position: relative;
     "
   >
-    <h1>Hello World!</h1>
-
-    <div
-      id="ad-container"
-      style="width: 200px; height: 100px; background-color: gray"
-    ></div>
+    <div id="ad-container" style="width: 100%; height: 100%"></div>
 
     <button
       id="close-button"
       onclick="closeAd()"
       style="
-        border: 4px solid black;
-        border-radius: 10px;
-        padding: 10px 20px;
-        background-color: white;
+        border-radius: 1000px;
+        width: 30px;
+        height: 30px;
+        background-color: rgba(116, 116, 116, 0.5);
         font-size: 18px;
         font-weight: 500;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 1000;
         display: none;
       "
     >
-      Close
+      x
+    </button>
+
+    <button
+      id="skip-button"
+      onclick="skipAd()"
+      style="
+        border-radius: 1000px;
+        padding: 8px 30px;
+        background-color: rgba(116, 116, 116, 0.5);
+        font-size: 18px;
+        font-weight: 500;
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        z-index: 1000;
+        display: none;
+      "
+    >
+      Skip
     </button>
 
     <p id="logs"></p>
@@ -55,6 +73,13 @@
         const closeButton = document.getElementById("close-button");
         if (closeButton) {
           closeButton.style.display = "block";
+        }
+      }
+
+      function showSkipButton() {
+        const skipButton = document.getElementById("skip-button");
+        if (skipButton) {
+          skipButton.style.display = "block";
         }
       }
     </script>
