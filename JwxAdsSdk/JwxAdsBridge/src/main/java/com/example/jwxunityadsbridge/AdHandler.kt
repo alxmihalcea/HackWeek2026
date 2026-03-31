@@ -9,7 +9,7 @@ interface AdHandlerListener {
 open class AdHandler(activity: Activity) : WebViewListener {
     private val listeners = mutableListOf<AdHandlerListener>()
 
-    private var webViewHandler: WebViewHandler = WebViewHandler(activity);
+    protected var webViewHandler: WebViewHandler = WebViewHandler(activity);
     private var isWebViewLoaded = false
 
     init {
@@ -28,7 +28,7 @@ open class AdHandler(activity: Activity) : WebViewListener {
         webViewHandler.load()
     }
 
-    public fun renderAd() {
+    open fun renderAd() {
         if (!isWebViewLoaded) {
             // TODO("Send webview not loaded event")
             return

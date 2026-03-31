@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.webkit.WebView
 import android.widget.FrameLayout
 import android.webkit.JavascriptInterface
+import android.webkit.WebViewClient
 
 interface WebViewListener {
     fun onWebViewLoaded()
@@ -15,6 +16,7 @@ interface WebViewListener {
 class WebViewHandler(private val activity: Activity) {
     private var webView: WebView? = null
     private var listener: WebViewListener? = null
+    private var isPageLoaded = false
 
     public fun setListener(listener: WebViewListener) {
         this.listener = listener
@@ -37,6 +39,12 @@ class WebViewHandler(private val activity: Activity) {
                 settings.domStorageEnabled = true
 
                 addJavascriptInterface(WebAppBridge(), "AndroidBridge")
+
+                webViewClient = object : WebViewClient() {
+                    override fun onPageFinished(view: WebView?, url: String?) {
+                        isPageLoaded = true
+                    }
+                }
 
                 loadDataWithBaseURL(
                     null,
@@ -62,6 +70,7 @@ class WebViewHandler(private val activity: Activity) {
                             <h1>Hello World!</h1>
                             
                             <button
+                                id="close-button"
                                 onclick="closeAd()"
                                 style="
                                     border: 4px solid black;
@@ -70,6 +79,7 @@ class WebViewHandler(private val activity: Activity) {
                                     background-color: white;
                                     font-size: 18px;
                                     font-weight: 500;
+                                    display: none
                                 "
                             >
                                 Close
@@ -79,6 +89,13 @@ class WebViewHandler(private val activity: Activity) {
                                 function closeAd() {
                                     if (window.AndroidBridge && window.AndroidBridge.closeWebView) {
                                         window.AndroidBridge.closeWebView();
+                                    }
+                                }
+                                
+                                function showCloseButton() {
+                                    const closeButton = document.getElementById("close-button")
+                                    if (closeButton) {
+                                        closeButton.style.display = "block"
                                     }
                                 }
                             </script>
@@ -108,6 +125,13 @@ class WebViewHandler(private val activity: Activity) {
         }
     }
 
+    public fun showCloseButton() {
+        activity.runOnUiThread {
+            if (!isPageLoaded) return@runOnUiThread
+            webView?.evaluateJavascript("showCloseButton();", null)
+        }
+    }
+
     fun close() {
         activity.runOnUiThread {
             webView?.let {
@@ -115,6 +139,7 @@ class WebViewHandler(private val activity: Activity) {
                 it.destroy()
             }
             webView = null
+            isPageLoaded = false
         }
     }
 
