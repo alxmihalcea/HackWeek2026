@@ -230,7 +230,12 @@ namespace JwxAdsSDK
 
         public void HandleLog(string message)
         {
-            SetMessage($"Event: Log: {message}", false);
+            if (!debugLogging)
+            {
+                return;
+            }
+
+            JwxAdsOnScreenLogger.LogEvent($"Event: Log: {message}");
         }
 
         private void LoadRewardedAdInternal()
