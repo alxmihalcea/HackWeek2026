@@ -2,85 +2,49 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
-namespace JwxAdsSDK
+public class StartScreenController : MonoBehaviour
 {
-    public class StartScreenController : MonoBehaviour
+    [Header("UI")]
+    [SerializeField] private Button playButton;
+    [Header("Scene")]
+    [SerializeField] private string gameSceneName = "GameScene";
+
+    private void Awake()
     {
-        [Header("UI")]
-        [SerializeField] private Button playButton;
-        [Header("Scene")]
-        [SerializeField] private string gameSceneName = "GameScene";
-
-        private bool waitingForRewarded;
-
-        private void OnEnable()
+        if (playButton != null)
         {
-            JwxAdsManager.OnRewardedClosed += HandleRewardedClosed;
-            JwxAdsManager.OnRewardedFailedToShow += HandleRewardedFailedToShow;
+            playButton.onClick.AddListener(Play);
+        }
+    }
+
+    private void Start()
+    {
+        AdsManager.Initialize();
+        AdsManager.LoadInterstitialAd();
+        AdsManager.LoadRewardedAd();
+    }
+
+    public void Play()
+    {
+        if (string.IsNullOrWhiteSpace(gameSceneName))
+        {
+            Debug.LogError("StartScreenController: game scene name is empty.");
+            return;
+        }
+        
+
+        if (playButton != null)
+        {
+            playButton.interactable = false;
         }
 
-        private void OnDisable()
+        if (!AdsManager.IsInterstitialLoaded)
         {
-            JwxAdsManager.OnRewardedClosed -= HandleRewardedClosed;
-            JwxAdsManager.OnRewardedFailedToShow -= HandleRewardedFailedToShow;
-        }
-
-        private void Awake()
-        {
-            if (playButton != null)
-            {
-                playButton.onClick.AddListener(Play);
-            }
-        }
-
-        private void Start()
-        {
-            JwxAdsManager.InitializeAds();
-            JwxAdsManager.LoadRewardedAd();
-        }
-
-        public void Play()
-        {
-            if (string.IsNullOrWhiteSpace(gameSceneName))
-            {
-                Debug.LogError("StartScreenController: game scene name is empty.");
-                return;
-            }
-
-            if (!waitingForRewarded)
-            {
-                waitingForRewarded = true;
-                if (playButton != null)
-                {
-                    playButton.interactable = false;
-                }
-                JwxAdsManager.ShowRewardedAd();
-                return;
-            }
-
+            AdsManager.LoadInterstitialAd();
             SceneManager.LoadScene(gameSceneName);
+            return;
         }
 
-        private void HandleRewardedClosed()
-        {
-            if (!waitingForRewarded)
-            {
-                return;
-            }
-
-            waitingForRewarded = false;
-            SceneManager.LoadScene(gameSceneName);
-        }
-
-        private void HandleRewardedFailedToShow(string errorMessage)
-        {
-            if (!waitingForRewarded)
-            {
-                return;
-            }
-
-            waitingForRewarded = false;
-            SceneManager.LoadScene(gameSceneName);
-        }
+        AdsManager.ShowInterstitialThen(() => SceneManager.LoadScene(gameSceneName));
     }
 }

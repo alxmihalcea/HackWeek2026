@@ -10,6 +10,7 @@ namespace JwxAdsSDK
 
         [Header("Placements")]
         [SerializeField] private string rewardedPlacementId = "rewarded-demo";
+        [SerializeField] private string interstitialPlacementId = "interstitial-demo";
 
         [Header("Debug")]
         [SerializeField] private bool debugLogging = false;
@@ -25,7 +26,14 @@ namespace JwxAdsSDK
         public static event Action OnRewardedClosed;
         public static event Action OnRewardedEarned;
 
+        public static event Action OnInterstitialLoaded;
+        public static event Action<string> OnInterstitialFailedToLoad;
+        public static event Action OnInterstitialShown;
+        public static event Action<string> OnInterstitialFailedToShow;
+        public static event Action OnInterstitialClosed;
+
         private bool isInitialized;
+        private bool initializeInProgress;
         private AdsListenerProxy listenerProxy;
 
 #if UNITY_EDITOR
@@ -97,8 +105,36 @@ namespace JwxAdsSDK
             Instance.ShowRewardedAdInternal();
         }
 
+         public static void LoadInterstitialAd()
+        {
+            if (Instance == null)
+            {
+                JwxAdsOnScreenLogger.LogError("JwxAds: No instance found. Add JwxAds to a GameObject in the scene.");
+                return;
+            }
+
+            Instance.LoadInterstitialAdInternal();
+        }
+
+        public static void ShowInterstitialAd()
+        {
+            if (Instance == null)
+            {
+                JwxAdsOnScreenLogger.LogError("JwxAds: No instance found. Add JwxAds to a GameObject in the scene.");
+                return;
+            }
+
+            Instance.ShowInterstitialAdInternal();
+        }
+
         public void Initialize()
         {
+            if (isInitialized || initializeInProgress)
+            {
+                return;
+            }
+
+            initializeInProgress = true;
             using var activity = AndroidAdsBridge.GetCurrentActivity();
             if (AndroidAdsBridge.TryCallBridge("initialize", out string errorMessage, appId, activity))
             {
@@ -106,6 +142,7 @@ namespace JwxAdsSDK
                 return;
             }
 
+            initializeInProgress = false;
             SetMessage("ERROR: " + errorMessage, true);
         }
 
@@ -145,10 +182,46 @@ namespace JwxAdsSDK
             RaiseRewardedFailedToShow(errorMessage);
         }
 
+        public void HandleInterstitialLoaded()
+        {
+            SetMessage("Event: Interstitial loaded", false);
+            RaiseInterstitialLoaded();
+        }
+
+        public void HandleInterstitialFailedToLoad(string errorMessage)
+        {
+            SetMessage($"Event: Interstitial failed to load: {errorMessage}", true);
+            RaiseInterstitialFailedToLoad(errorMessage);
+        }
+
+        public void HandleInterstitialShown()
+        {
+            SetMessage("Event: Interstitial shown", false);
+            RaiseInterstitialShown();
+        }
+
+        public void HandleInterstitialFailedToShow(string errorMessage)
+        {
+            SetMessage($"Event: Interstitial failed to show: {errorMessage}", true);
+            RaiseInterstitialFailedToShow(errorMessage);
+        }
+
+        public void HandleInterstitialClosed()
+        {
+            SetMessage("Event: Interstitial closed", false);
+            RaiseInterstitialClosed();
+        }
+
         public void HandleInitialized()
         {
+            if (isInitialized)
+            {
+                return;
+            }
+
             SetMessage("Event: Initialized", false);
             isInitialized = true;
+            initializeInProgress = false;
             RaiseInitialized();
         }
 
@@ -156,6 +229,7 @@ namespace JwxAdsSDK
         {
             SetMessage($"Event: Initialization failed: {errorMessage}", true);
             isInitialized = false;
+            initializeInProgress = false;
             RaiseInitializationFailed(errorMessage);
         }
 
@@ -201,7 +275,41 @@ namespace JwxAdsSDK
 
             SetMessage("ERROR: " + errorMessage, true);
         }
+        private void LoadInterstitialAdInternal()
+        {
+            if (!isInitialized)
+            {
+                SetMessage("SDK not initialized yet. Sending initialize call.", true);
+                Initialize();
+                return;
+            }
 
+            string resolvedPlacementId = interstitialPlacementId;
+            if (AndroidAdsBridge.TryCallBridge("loadInterstitial", out string errorMessage, resolvedPlacementId))
+            {
+                SetMessage("Load interstitial call sent", false);
+                return;
+            }
+            SetMessage("ERROR: " + errorMessage, true);
+        }
+
+        private void ShowInterstitialAdInternal()
+        {
+            if (!isInitialized)
+            {
+                SetMessage("SDK not initialized yet. Sending initialize call.", true);
+                Initialize();
+                return;
+            }
+
+            string resolvedPlacementId = interstitialPlacementId;
+            if (AndroidAdsBridge.TryCallBridge("showInterstitial", out string errorMessage, resolvedPlacementId))
+            {
+                SetMessage("Show interstitial call sent", false);
+                return;
+            }
+            SetMessage("ERROR: " + errorMessage, true);
+        }
         private void RaiseInitialized()
         {
             OnInitialized?.Invoke();
@@ -240,6 +348,31 @@ namespace JwxAdsSDK
         private void RaiseRewardedEarned()
         {
             OnRewardedEarned?.Invoke();
+        }
+
+        private void RaiseInterstitialLoaded()
+        {
+            OnInterstitialLoaded?.Invoke();
+        }
+
+        private void RaiseInterstitialFailedToLoad(string errorMessage)
+        {
+            OnInterstitialFailedToLoad?.Invoke(errorMessage);
+        }
+
+        private void RaiseInterstitialShown()
+        {
+            OnInterstitialShown?.Invoke();
+        }
+
+        private void RaiseInterstitialFailedToShow(string errorMessage)
+        {
+            OnInterstitialFailedToShow?.Invoke(errorMessage);
+        }
+
+        private void RaiseInterstitialClosed()
+        {
+            OnInterstitialClosed?.Invoke();
         }
 
         private void SetMessage(string message, bool isError)

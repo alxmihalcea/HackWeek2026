@@ -1,17 +1,18 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem.UI;
 #endif
 using UnityEngine.UI;
 
-namespace JwxAdsSDK
+public class SimpleTapGame : MonoBehaviour
 {
-    public class SimpleTapGame : MonoBehaviour
-    {
         [Header("UI")]
         [SerializeField] private int startScore = 0;
+        [SerializeField] private float roundDurationSeconds = 30f;
+        [SerializeField] private float rewardContinueSeconds = 15f;
         [SerializeField] private float moveInterval = 1.2f;
         [SerializeField] private Vector2 targetSize = new Vector2(100, 100);
         [SerializeField] private float targetScale = 0.01f;
@@ -22,31 +23,42 @@ namespace JwxAdsSDK
         [SerializeField] private float tapParticleSize = 18f;
         [SerializeField] private float tapParticleLifetime = 0.35f;
         [SerializeField] private float tapParticleSpeed = 240f;
-        [Header("Ads")]
-        [SerializeField] private int rewardedScoreThreshold = 10;
-
+        [SerializeField] private Vector2 targetSpawnPadding = new Vector2(80f, 160f);
+        [Header("Game Over UI")]
+        [SerializeField] private GameObject gameOverRoot;
+        [SerializeField] private Button gameOverContinueButton;
+        [SerializeField] private Button gameOverRestartButton;
         private Text scoreText;
+        private Text timerText;
         private RectTransform canvasRect;
         private RectTransform targetRect;
+        private Button targetButton;
         private int score;
+        private float remainingTime;
+        private bool isGameOver;
+        private bool hasRewardedAvailability;
+        private bool lastRewardedAvailable;
+        private bool rewardedContinueUsed;
         private Sprite tapParticleSprite;
-        private bool rewardedShown;
-
-        private void Start()
+        private Coroutine moveLoopCoroutine;
+        private void Awake()
         {
             score = startScore;
+            remainingTime = Mathf.Max(0f, roundDurationSeconds);
             EnsureEventSystem();
             BuildUi();
             UpdateScore();
-            StartCoroutine(MoveLoop());
+            UpdateTimer();
+        }
 
-            JwxAdsManager.InitializeAds();
-            JwxAdsManager.LoadRewardedAd();
+        private void Start()
+        {
+            moveLoopCoroutine = StartCoroutine(MoveLoop());
         }
 
         private static void EnsureEventSystem()
         {
-            if (FindObjectOfType<EventSystem>() != null)
+            if (FindAnyObjectByType<EventSystem>() != null)
             {
                 return;
             }
@@ -93,6 +105,15 @@ namespace JwxAdsSDK
             instructionsRect.anchoredPosition = new Vector2(0, -90);
             instructionsRect.sizeDelta = new Vector2(600, 40);
 
+            timerText = CreateText(canvasObject.transform, "TimerText", "Time: 00:00", 36, TextAnchor.UpperRight, FontStyle.Bold);
+            timerText.color = Color.black;
+            var timerRect = timerText.GetComponent<RectTransform>();
+            timerRect.anchorMin = new Vector2(1f, 1f);
+            timerRect.anchorMax = new Vector2(1f, 1f);
+            timerRect.pivot = new Vector2(1f, 1f);
+            timerRect.anchoredPosition = new Vector2(-20, -20);
+            timerRect.sizeDelta = new Vector2(260, 40);
+
             var targetObject = new GameObject("Target");
             targetObject.transform.SetParent(canvasObject.transform, false);
 
@@ -114,11 +135,13 @@ namespace JwxAdsSDK
                 targetRect.sizeDelta = targetSize;
             }
 
-            var button = targetObject.AddComponent<Button>();
-            button.targetGraphic = image;
-            button.onClick.AddListener(OnTargetClicked);
+            targetButton = targetObject.AddComponent<Button>();
+            targetButton.targetGraphic = image;
+            targetButton.onClick.AddListener(OnTargetClicked);
 
             MoveTarget();
+
+            SetupGameOverUi();
         }
 
         private void CreateBackground(Transform parent)
@@ -171,33 +194,24 @@ namespace JwxAdsSDK
             while (true)
             {
                 yield return wait;
-                MoveTarget();
+                if (!isGameOver)
+                {
+                    MoveTarget();
+                }
             }
         }
 
         private void OnTargetClicked()
         {
+            if (isGameOver)
+            {
+                return;
+            }
+
             score++;
             UpdateScore();
-            TryShowRewardedAtScore();
             MoveTarget();
             SpawnTapEffect();
-        }
-
-        private void TryShowRewardedAtScore()
-        {
-            if (rewardedShown)
-            {
-                return;
-            }
-
-            if (score < rewardedScoreThreshold)
-            {
-                return;
-            }
-
-            rewardedShown = true;
-            JwxAdsManager.ShowRewardedAd();
         }
 
         private void UpdateScore()
@@ -208,6 +222,19 @@ namespace JwxAdsSDK
             }
         }
 
+        private void UpdateTimer()
+        {
+            if (timerText == null)
+            {
+                return;
+            }
+
+            var clamped = Mathf.Max(0f, remainingTime);
+            var minutes = Mathf.FloorToInt(clamped / 60f);
+            var seconds = Mathf.FloorToInt(clamped % 60f);
+            timerText.text = $"Time: {minutes:00}:{seconds:00}";
+        }
+
         private void MoveTarget()
         {
             if (canvasRect == null || targetRect == null)
@@ -216,7 +243,7 @@ namespace JwxAdsSDK
             }
 
             var size = targetRect.sizeDelta;
-            var padding = new Vector2(40, 120);
+            var padding = targetSpawnPadding;
             var min = canvasRect.rect.min + padding + (size * 0.5f);
             var max = canvasRect.rect.max - padding - (size * 0.5f);
 
@@ -298,5 +325,162 @@ namespace JwxAdsSDK
 
             return Resources.Load<Sprite>(resourceName);
         }
-    }
+
+        private void Update()
+        {
+            if (isGameOver)
+            {
+                return;
+            }
+
+            if (remainingTime <= 0f)
+            {
+                return;
+            }
+
+            remainingTime -= Time.deltaTime;
+            UpdateTimer();
+
+            if (remainingTime <= 0f)
+            {
+                remainingTime = 0f;
+                UpdateTimer();
+                EndRound();
+            }
+
+            if (isGameOver)
+            {
+                UpdateContinueAvailability();
+            }
+        }
+
+        private void EndRound()
+        {
+            if (isGameOver)
+            {
+                return;
+            }
+
+            isGameOver = true;
+            if (targetButton != null)
+            {
+                targetButton.interactable = false;
+            }
+
+            if (gameOverRoot != null)
+            {
+                gameOverRoot.SetActive(true);
+            }
+
+            UpdateContinueAvailability();
+        }
+
+        private void ContinueAfterRewarded()
+        {
+            if (gameOverRoot != null)
+            {
+                gameOverRoot.SetActive(false);
+            }
+
+            isGameOver = false;
+            rewardedContinueUsed = true;
+            remainingTime = Mathf.Max(0f, remainingTime) + Mathf.Max(1f, rewardContinueSeconds);
+            UpdateTimer();
+
+            if (targetButton != null)
+            {
+                targetButton.interactable = true;
+            }
+        }
+
+        private void RestartGame()
+        {
+            ResetRound();
+        }
+
+        private void ResetRound()
+        {
+            score = startScore;
+            remainingTime = Mathf.Max(0f, roundDurationSeconds);
+            isGameOver = false;
+            rewardedContinueUsed = false;
+
+            if (gameOverRoot != null)
+            {
+                gameOverRoot.SetActive(false);
+            }
+
+            if (targetButton != null)
+            {
+                targetButton.interactable = true;
+            }
+
+            UpdateScore();
+            UpdateTimer();
+            MoveTarget();
+        }
+
+        private void SetupGameOverUi()
+        {
+            if (gameOverRoot == null)
+            {
+                Debug.LogError("SimpleTapGame: Game Over Root is not assigned.");
+                return;
+            }
+
+            gameOverRoot.SetActive(false);
+
+            if (gameOverContinueButton == null)
+            {
+                Debug.LogError("SimpleTapGame: Game Over Continue Button is not assigned.");
+                return;
+            }
+
+            if (gameOverRestartButton == null)
+            {
+                Debug.LogError("SimpleTapGame: Game Over Restart Button is not assigned.");
+                return;
+            }
+
+            gameOverContinueButton.onClick.RemoveAllListeners();
+            gameOverContinueButton.onClick.AddListener(() =>
+            {
+                gameOverContinueButton.interactable = false;
+                AdsManager.ShowRewardedThen(() =>
+                {
+                    gameOverContinueButton.interactable = true;
+                    ContinueAfterRewarded();
+                });
+            });
+
+            gameOverRestartButton.onClick.RemoveAllListeners();
+            gameOverRestartButton.onClick.AddListener(RestartGame);
+
+            UpdateContinueAvailability();
+        }
+
+        private void UpdateContinueAvailability()
+        {
+            if (gameOverContinueButton == null)
+            {
+                return;
+            }
+
+            if (rewardedContinueUsed)
+            {
+                gameOverContinueButton.gameObject.SetActive(false);
+                return;
+            }
+
+            bool available = AdsManager.IsRewardedLoaded;
+            if (hasRewardedAvailability && available == lastRewardedAvailable)
+            {
+                return;
+            }
+
+            hasRewardedAvailability = true;
+            lastRewardedAvailable = available;
+            gameOverContinueButton.gameObject.SetActive(available);
+        }
+
 }
