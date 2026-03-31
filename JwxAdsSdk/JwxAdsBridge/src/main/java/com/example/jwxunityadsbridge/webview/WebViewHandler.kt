@@ -3,7 +3,9 @@ package com.example.jwxunityadsbridge.webview
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.graphics.Color
+import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.webkit.ConsoleMessage
 import android.webkit.WebView
 import android.widget.FrameLayout
@@ -37,6 +39,11 @@ class WebViewHandler(private val activity: Activity) {
 
             WebView.setWebContentsDebuggingEnabled(true)
 
+            activity.window.setFlags(
+                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
+            )
+
             webView = WebView(activity).apply {
                 layoutParams = FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
@@ -51,8 +58,12 @@ class WebViewHandler(private val activity: Activity) {
                 settings.loadsImagesAutomatically = true
                 settings.allowFileAccess = true
                 settings.allowContentAccess = true
-                settings.mixedContentMode =
-                    android.webkit.WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
+                settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                settings.javaScriptCanOpenWindowsAutomatically = true
+
+                setLayerType(View.LAYER_TYPE_HARDWARE, null)
+                requestFocus()
+                requestFocusFromTouch()
 
                 addJavascriptInterface(WebAppBridge(), "AndroidBridge")
 
@@ -103,14 +114,16 @@ class WebViewHandler(private val activity: Activity) {
         activity.runOnUiThread {
             val currentWebView = webView ?: return@runOnUiThread
             if (currentWebView.parent != null) return@runOnUiThread
-
-            activity.addContentView(
+            val rootView = activity.findViewById<ViewGroup>(android.R.id.content)
+            rootView.addView(
                 currentWebView,
                 FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT
                 )
             )
+            currentWebView.visibility = View.VISIBLE
+            currentWebView.bringToFront()
         }
     }
 
