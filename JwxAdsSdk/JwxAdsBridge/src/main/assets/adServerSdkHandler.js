@@ -3,19 +3,18 @@
     const sdk = window.cnxAdsSdk;
 
     if (!sdk) {
-        onWebviewError("Ad server SDK not found");
+        onWebviewError('Ad server SDK not found');
         return;
     }
 
     const adsManager = sdk.fetchAdsManager({
-        // placementId: '380498a1-0463-446c-8c67-6cccc8b25541',
-        placementId: 'c8ce2228-4f32-4f1b-970f-b9e76449452c',
+        placementId: '380498a1-0463-446c-8c67-6cccc8b25541',
         adContainerId: containerId,
         player: {
-            playbackmethod: 2,
-            plcmt: 1
+            playbackmethod: 2 /*VideoPlaybackMethodEnum._AUTOPLAY_PAGE_LOAD_SOUND_OFF*/,
+            plcmt: 1 /*VideoPlacement.IN_STREAM*/
         },
-        volume: 1,
+        volume: 0,
         adServer: {
             lineitems: [
                 {
@@ -35,23 +34,15 @@
             title: 'content-title',
             url: 'https://www.example.com'
         },
-    })
-
-    adsManager.on('setupError', (error) => {
-        console.error('Setup error:', error);
-    });
-    adsManager.on('adError', (error) => {
-        console.error('Ad error:', error);
-    });
-    adsManager.on('adBreakStarted', (payload) => {
-        console.log('Ad break started', payload);
-    });
-    adsManager.on('adBreakEnded', (payload) => {
-        console.log('Ad break ended', payload);
+        _jwpcInternals: {
+            strategyOutcomeId: 'StrategyOutcomeID'
+        }
     });
 
-    adsManager.startAdBreak({
-        timeout: 10_000,
-        type: 'midroll',
+    adsManager.on('setupCompleted', () => {
+        adsManager.startAdBreak({
+            timeout: 10_000,
+            type: 'preroll'
+        });
     });
-})()
+})();
