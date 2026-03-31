@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <script src="https://cd.connatix.com/sax.sdk.js?cid=daceb440-4162-43ed-b259-7f91be8606f9"></script>
+  </head>
+  <body
+    style="
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 100px;
+      height: 100vh;
+      background: white;
+      font-family: sans-serif;
+      position: relative;
+    "
+  >
+    <h1>Hello World!</h1>
+
+    <button
+      id="close-button"
+      onclick="closeAd()"
+      style="
+        border: 4px solid black;
+        border-radius: 10px;
+        padding: 10px 20px;
+        background-color: white;
+        font-size: 18px;
+        font-weight: 500;
+        display: none;
+      "
+    >
+      Close
+    </button>
+
+    <p id="logs"></p>
+
+    <script>
+      function closeAd() {
+        if (window.AndroidBridge && window.AndroidBridge.closeWebView) {
+          window.AndroidBridge.closeWebView();
+        }
+      }
+
+      function showCloseButton() {
+        const closeButton = document.getElementById("close-button");
+        if (closeButton) {
+          closeButton.style.display = "block";
+        }
+      }
+
+      const logs = document.getElementById("logs");
+      logs.innerHTML = "Logs:\n";
+
+      const adsSdk = window.cnxAdsSdk;
+      const serialized = JSON.stringify(adsSdk);
+      logs.innerHTML += `Serialized: ${serialized}\n`;
+    </script>
+  </body>
+</html>
