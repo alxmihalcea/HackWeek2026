@@ -52,6 +52,31 @@ public class AdsListenerProxy : AndroidJavaProxy
         manager.HandleRewardedEarned();
     }
 
+    public void onInterstitialLoaded()
+    {
+        manager.HandleInterstitialLoaded();
+    }
+
+    public void onInterstitialFailedToLoad(string error)
+    {
+        manager.HandleInterstitialFailedToLoad(error);
+    }
+
+    public void onInterstitialShown()
+    {
+        manager.HandleInterstitialShown();
+    }
+
+    public void onInterstitialFailedToShow(string error)
+    {
+        manager.HandleInterstitialFailedToShow(error);
+    }
+
+    public void onInterstitialClosed()
+    {
+        manager.HandleInterstitialClosed();
+    }
+
     public void onLog(string message)
     {
         manager.HandleLog(message);
