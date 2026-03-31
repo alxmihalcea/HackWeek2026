@@ -94,7 +94,7 @@ public class JwxAdsOnScreenLogger : MonoBehaviour
         for (int i = 0; i < entries.Count; i++)
         {
             float entryHeight = Mathf.Max(LineHeight, style.CalcHeight(new GUIContent(entries[i].Message), width));
-            style.normal.textColor = entries[i].IsError ? Color.red : Color.white;
+            style.normal.textColor = entries[i].IsError ? Color.red : Color.green;
             GUI.Label(new Rect(Padding * 2f, y, width - Padding, entryHeight), entries[i].Message, style);
             y += entryHeight;
         }
