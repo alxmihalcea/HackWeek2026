@@ -7,6 +7,8 @@ import android.app.Activity
 interface AdHandlerListener {
     fun onAdLoaded()
     fun onAdStopped()
+
+    fun onWebViewLog(log: String)
 }
 
 open class AdHandler(activity: Activity) : WebViewListener {
@@ -48,5 +50,9 @@ open class AdHandler(activity: Activity) : WebViewListener {
     override fun onWebviewClosed() {
         isWebViewLoaded = false
         listeners.forEach { it.onAdStopped() }
+    }
+
+    override fun onWebViewLog(log: String) {
+        listeners.forEach { it.onWebViewLog(log) }
     }
 }

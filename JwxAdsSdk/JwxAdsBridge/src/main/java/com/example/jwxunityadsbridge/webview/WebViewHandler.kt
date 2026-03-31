@@ -4,14 +4,21 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.graphics.Color
 import android.view.ViewGroup
+import android.webkit.ConsoleMessage
 import android.webkit.WebView
 import android.widget.FrameLayout
 import android.webkit.JavascriptInterface
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebViewClient
 
 interface WebViewListener {
     fun onWebViewLoaded()
     fun onWebviewClosed()
+
+    fun onWebViewLog(log: String)
 }
 
 class WebViewHandler(private val activity: Activity) {
@@ -28,6 +35,8 @@ class WebViewHandler(private val activity: Activity) {
         activity.runOnUiThread {
             if (webView != null) return@runOnUiThread
 
+            WebView.setWebContentsDebuggingEnabled(true)
+
             webView = WebView(activity).apply {
                 layoutParams = FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
@@ -38,6 +47,12 @@ class WebViewHandler(private val activity: Activity) {
 
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
+                settings.mediaPlaybackRequiresUserGesture = false
+                settings.loadsImagesAutomatically = true
+                settings.allowFileAccess = true
+                settings.allowContentAccess = true
+                settings.mixedContentMode =
+                    android.webkit.WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
 
                 addJavascriptInterface(WebAppBridge(), "AndroidBridge")
 
@@ -47,17 +62,50 @@ class WebViewHandler(private val activity: Activity) {
                         // TODO this event should wait for the sax sdk to be initialised and the ad to be loaded once we have sax sdk implemented
                         listener?.onWebViewLoaded()
                     }
+
+                    override fun onReceivedError(
+                        view: WebView?,
+                        request: WebResourceRequest?,
+                        error: WebResourceError?
+                    ) {
+                        listener?.onWebViewLog(
+                            "WebView error: url=${request?.url}, code=${error?.errorCode}, desc=${error?.description}"
+                        )
+                    }
+
+                    override fun onReceivedHttpError(
+                        view: WebView?,
+                        request: WebResourceRequest?,
+                        errorResponse: WebResourceResponse?
+                    ) {
+                        listener?.onWebViewLog(
+                            "HTTP error: url=${request?.url}, status=${errorResponse?.statusCode}, reason=${errorResponse?.reasonPhrase}"
+                        )
+                    }
                 }
 
-                loadUrl("file:///android_asset/index.html")
+                webChromeClient = object : WebChromeClient() {
+                    override fun onConsoleMessage(consoleMessage: ConsoleMessage): Boolean {
+                        listener?.onWebViewLog(
+                            "WebView [${consoleMessage.messageLevel()}] ${consoleMessage.message()} " +
+                                    "(${consoleMessage.sourceId()}:${consoleMessage.lineNumber()})"
+                        )
+                        return true
+                    }
+                }
+
+                loadUrl("https://assets.connatix.com/Elements/0a34019a-f275-4aac-a280-55114dffd5e4/hackweek_webview_html.html")
             }
         }
     }
 
     public fun render() {
         activity.runOnUiThread {
+            val currentWebView = webView ?: return@runOnUiThread
+            if (currentWebView.parent != null) return@runOnUiThread
+
             activity.addContentView(
-                webView,
+                currentWebView,
                 FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT
@@ -76,7 +124,7 @@ class WebViewHandler(private val activity: Activity) {
     public fun showSkipButton() {
         activity.runOnUiThread {
             if (!isPageLoaded) return@runOnUiThread
-            webView?.evaluateJavascript("showSkipButton", null)
+            webView?.evaluateJavascript("showSkipButton()", null)
         }
     }
 

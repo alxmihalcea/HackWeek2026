@@ -3,7 +3,7 @@
     const sdk = window.cnxAdsSdk;
 
     if (!sdk) {
-        onWebviewError('Ad server SDK not found');
+        console.log('Ad server SDK not found');
         return;
     }
 

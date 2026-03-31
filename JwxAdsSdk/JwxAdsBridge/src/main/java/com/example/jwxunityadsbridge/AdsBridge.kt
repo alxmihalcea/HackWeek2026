@@ -50,6 +50,10 @@ class AdsBridge {
                 override fun onAdStopped() {
                     onRewardedStopped()
                 }
+
+                override fun onWebViewLog(log: String) {
+                    listener?.onLog("Rewarded $log")
+                }
             })
 
             interstitialHandler = InterstitialHandler(activity)
@@ -60,6 +64,10 @@ class AdsBridge {
 
                 override fun onAdStopped() {
                     onInterstitialStopped()
+                }
+
+                override fun onWebViewLog(log: String) {
+                    listener?.onLog("Interstitial $log")
                 }
             })
 
