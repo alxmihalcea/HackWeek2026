@@ -25,7 +25,8 @@ interface AdsListener {
 class AdsBridge {
     companion object {
         private var initialized = false
-        private var loadedPlacementId: String? = null
+        private var loadedRewardedPlacementId: String? = null
+        private var loadedInterstitialPlacementId: String? = null
         private var listener: AdsListener? = null
 
         private var rewardedHandler: RewardedHandler? = null
@@ -90,7 +91,7 @@ class AdsBridge {
                 return
             }
 
-            loadedPlacementId = placementId
+            loadedRewardedPlacementId = placementId
             rewardedHandler!!.loadAd()
         }
 
@@ -101,7 +102,7 @@ class AdsBridge {
                 listener?.onRewardedFailedToShow(error)
                 return
             }
-            if (loadedPlacementId != placementId) {
+            if (loadedRewardedPlacementId != placementId) {
                 val error = "Show failed: placement not loaded"
                 listener?.onRewardedFailedToShow(error)
                 return
@@ -135,7 +136,7 @@ class AdsBridge {
                 return;
             }
 
-            loadedPlacementId = placementId
+            loadedInterstitialPlacementId = placementId
             interstitialHandler!!.loadAd()
         }
 
@@ -146,7 +147,7 @@ class AdsBridge {
                 listener?.onInterstitialFailedToShow(error)
                 return
             }
-            if (loadedPlacementId != placementId) {
+            if (loadedInterstitialPlacementId != placementId) {
                 val error = "Show failed: placement not loaded"
                 listener?.onInterstitialFailedToShow(error)
                 return
