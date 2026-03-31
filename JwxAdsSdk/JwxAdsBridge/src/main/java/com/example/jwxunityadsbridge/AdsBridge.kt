@@ -45,12 +45,20 @@ class AdsBridge {
                 override fun onAdLoaded() {
                     onRewardedAdLoaded()
                 }
+
+                override fun onAdStopped() {
+                    onRewardedStopped()
+                }
             })
 
             interstitialHandler = InterstitialHandler(activity)
             interstitialHandler!!.addListener(object : AdHandlerListener {
                 override fun onAdLoaded() {
                     onInterstitialAdLoaded()
+                }
+
+                override fun onAdStopped() {
+                    onInterstitialStopped()
                 }
             })
 
@@ -107,10 +115,6 @@ class AdsBridge {
             rewardedHandler!!.renderAd()
 
             listener?.onRewardedShown()
-
-            // Simulare pentru demo
-            listener?.onRewardedEarned()
-            listener?.onRewardedClosed()
         }
 
         @JvmStatic
@@ -156,9 +160,6 @@ class AdsBridge {
             interstitialHandler!!.renderAd();
 
             listener?.onInterstitialShown()
-
-            // Simulare pentru demo
-            listener?.onInterstitialClosed()
         }
 
         private fun sendLog(message: String) {
@@ -171,6 +172,15 @@ class AdsBridge {
 
         private fun onInterstitialAdLoaded() {
             listener?.onInterstitialLoaded()
+        }
+
+        private fun onRewardedStopped() {
+            listener?.onRewardedClosed()
+            listener?.onRewardedEarned()
+        }
+
+        private fun onInterstitialStopped() {
+            listener?.onInterstitialClosed()
         }
     }
 }

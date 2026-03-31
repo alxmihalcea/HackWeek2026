@@ -6,6 +6,7 @@ import android.app.Activity
 
 interface AdHandlerListener {
     fun onAdLoaded()
+    fun onAdStopped()
 }
 
 open class AdHandler(activity: Activity) : WebViewListener {
@@ -36,13 +37,16 @@ open class AdHandler(activity: Activity) : WebViewListener {
             return
         }
 
-        isWebViewLoaded = false
-
         webViewHandler.render()
     }
 
     override fun onWebViewLoaded() {
         isWebViewLoaded = true
         listeners.forEach { it.onAdLoaded() }
+    }
+
+    override fun onWebviewClosed() {
+        isWebViewLoaded = false
+        listeners.forEach { it.onAdStopped() }
     }
 }

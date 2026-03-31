@@ -11,6 +11,7 @@ import android.webkit.WebViewClient
 
 interface WebViewListener {
     fun onWebViewLoaded()
+    fun onWebviewClosed()
 }
 
 class WebViewHandler(private val activity: Activity) {
@@ -80,6 +81,7 @@ class WebViewHandler(private val activity: Activity) {
             }
             webView = null
             isPageLoaded = false
+            listener?.onWebviewClosed()
         }
     }
 
