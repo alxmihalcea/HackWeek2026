@@ -1,5 +1,7 @@
-package com.example.jwxunityadsbridge
+package com.example.jwxunityadsbridge.adhandler
 
+import com.example.jwxunityadsbridge.webview.WebViewHandler
+import com.example.jwxunityadsbridge.webview.WebViewListener
 import android.app.Activity
 
 interface AdHandlerListener {

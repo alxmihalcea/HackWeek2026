@@ -1,12 +1,12 @@
-package com.example.jwxunityadsbridge
+package com.example.jwxunityadsbridge.adhandler
 
 import android.app.Activity
 import android.os.Handler
 import android.os.Looper
 
-class RewardedHandler(activity: Activity) : AdHandler(activity) {
+class InterstitialHandler(activity: Activity) : AdHandler(activity) {
     val timerHandler = Handler(Looper.getMainLooper())
-    val timeUntilShowSkipButton = 5000L
+    val timeUntilShowSkipButton = 15_000L
 
     override fun renderAd() {
         super.renderAd()

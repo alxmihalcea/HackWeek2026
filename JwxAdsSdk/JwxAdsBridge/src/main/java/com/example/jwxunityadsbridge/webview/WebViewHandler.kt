@@ -1,4 +1,4 @@
-package com.example.jwxunityadsbridge
+package com.example.jwxunityadsbridge.webview
 
 import android.annotation.SuppressLint
 import android.app.Activity
