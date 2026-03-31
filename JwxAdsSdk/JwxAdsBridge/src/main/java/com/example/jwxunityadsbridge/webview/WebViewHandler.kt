@@ -2,6 +2,7 @@ package com.example.jwxunityadsbridge.webview
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Intent
 import android.graphics.Color
 import android.view.View
 import android.view.ViewGroup
@@ -28,8 +29,28 @@ class WebViewHandler(private val activity: Activity) {
     private var listener: WebViewListener? = null
     private var isPageLoaded = false
 
+    companion object {
+        private const val DefaultUrl =
+            "https://assets.connatix.com/Elements/0a34019a-f275-4aac-a280-55114dffd5e4/hackweek_webview_html.html"
+        private var activeListener: WebViewListener? = null
+        private var activeUrl: String = DefaultUrl
+
+        fun bindListener(listener: WebViewListener?) {
+            activeListener = listener
+        }
+
+        fun getListener(): WebViewListener? = activeListener
+
+        fun getUrl(): String = activeUrl
+
+        fun setUrl(url: String) {
+            activeUrl = url
+        }
+    }
+
     public fun setListener(listener: WebViewListener) {
         this.listener = listener
+        bindListener(listener)
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -43,6 +64,7 @@ class WebViewHandler(private val activity: Activity) {
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
             )
+            activity.window.decorView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
 
             webView = WebView(activity).apply {
                 layoutParams = FrameLayout.LayoutParams(
@@ -51,6 +73,7 @@ class WebViewHandler(private val activity: Activity) {
                 )
 
                 setBackgroundColor(Color.WHITE)
+                setLayerType(View.LAYER_TYPE_HARDWARE, null)
 
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
@@ -58,10 +81,14 @@ class WebViewHandler(private val activity: Activity) {
                 settings.loadsImagesAutomatically = true
                 settings.allowFileAccess = true
                 settings.allowContentAccess = true
-                settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
                 settings.javaScriptCanOpenWindowsAutomatically = true
+                settings.useWideViewPort = true
+                settings.loadWithOverviewMode = true
+                settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
 
-                setLayerType(View.LAYER_TYPE_HARDWARE, null)
+                listener?.onWebViewLog("WebView HW: ${this.isHardwareAccelerated}")
+                listener?.onWebViewLog("Window HW: ${activity.window.decorView.isHardwareAccelerated}")
+
                 requestFocus()
                 requestFocusFromTouch()
 
@@ -105,27 +132,15 @@ class WebViewHandler(private val activity: Activity) {
                     }
                 }
 
-                loadUrl("https://assets.connatix.com/Elements/0a34019a-f275-4aac-a280-55114dffd5e4/hackweek_webview_html.html")
+                loadUrl(WebViewHandler.getUrl())
             }
         }
     }
 
     public fun render() {
         activity.runOnUiThread {
-            val currentWebView = webView ?: return@runOnUiThread
-            if (currentWebView.parent != null) return@runOnUiThread
-            val rootView = activity.findViewById<ViewGroup>(android.R.id.content)
-            rootView.addView(
-                currentWebView,
-                FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-                )
-            )
-            currentWebView.visibility = View.VISIBLE
-            currentWebView.bringToFront()
-
-            webView?.evaluateJavascript("startAdBreak()", null)
+            val intent = Intent(activity, AdActivity::class.java)
+            activity.startActivity(intent)
         }
     }
 
