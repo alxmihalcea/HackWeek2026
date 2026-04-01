@@ -34,6 +34,9 @@ class WebViewHandler(private val activity: Activity) {
             "https://assets.connatix.com/Elements/0a34019a-f275-4aac-a280-55114dffd5e4/hackweek_webview_html.html"
         private var activeListener: WebViewListener? = null
         private var activeUrl: String = DefaultUrl
+        private var sharedWebView: WebView? = null
+        private var sharedLoaded = false
+        private var pendingShow = false
 
         fun bindListener(listener: WebViewListener?) {
             activeListener = listener
@@ -46,6 +49,19 @@ class WebViewHandler(private val activity: Activity) {
         fun setUrl(url: String) {
             activeUrl = url
         }
+
+        fun getSharedWebView(): WebView? = sharedWebView
+
+        fun markShowRequested() {
+            pendingShow = true
+        }
+
+        fun showIfReady() {
+            if (sharedLoaded) {
+                sharedWebView?.evaluateJavascript("startAdBreak()", null)
+                pendingShow = false
+            }
+        }
     }
 
     public fun setListener(listener: WebViewListener) {
@@ -56,7 +72,7 @@ class WebViewHandler(private val activity: Activity) {
     @SuppressLint("SetJavaScriptEnabled")
     public fun load() {
         activity.runOnUiThread {
-            if (webView != null) return@runOnUiThread
+            if (webView != null || sharedWebView != null) return@runOnUiThread
 
             WebView.setWebContentsDebuggingEnabled(true)
 
@@ -66,7 +82,7 @@ class WebViewHandler(private val activity: Activity) {
             )
             activity.window.decorView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
 
-            webView = WebView(activity).apply {
+            val created = WebView(activity).apply {
                 layoutParams = FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT
@@ -97,8 +113,12 @@ class WebViewHandler(private val activity: Activity) {
                 webViewClient = object : WebViewClient() {
                     override fun onPageFinished(view: WebView?, url: String?) {
                         isPageLoaded = true
+                        sharedLoaded = true
                         // TODO this event should wait for the sax sdk to be initialised and the ad to be loaded once we have sax sdk implemented
                         listener?.onWebViewLoaded()
+                        if (pendingShow) {
+                            showIfReady()
+                        }
                     }
 
                     override fun onReceivedError(
@@ -134,12 +154,15 @@ class WebViewHandler(private val activity: Activity) {
 
                 loadUrl(WebViewHandler.getUrl())
             }
+            webView = created
+            sharedWebView = created
         }
     }
 
     public fun render() {
         activity.runOnUiThread {
             val intent = Intent(activity, AdActivity::class.java)
+            markShowRequested()
             activity.startActivity(intent)
         }
     }
