@@ -28,51 +28,43 @@ class WebViewHandler(private val activity: Activity) {
     private var webView: WebView? = null
     private var listener: WebViewListener? = null
     private var isPageLoaded = false
+    private var pendingShow = false
+    private val handlerId: Int
+    private var closeAction: (() -> Unit)? = null
 
     companion object {
         private const val DefaultUrl =
             "https://assets.connatix.com/Elements/0a34019a-f275-4aac-a280-55114dffd5e4/hackweek_webview_html.html"
-        private var activeListener: WebViewListener? = null
         private var activeUrl: String = DefaultUrl
-        private var sharedWebView: WebView? = null
-        private var sharedLoaded = false
-        private var pendingShow = false
+        private var nextId = 1
+        private val handlers = mutableMapOf<Int, WebViewHandler>()
 
-        fun bindListener(listener: WebViewListener?) {
-            activeListener = listener
-        }
-
-        fun getListener(): WebViewListener? = activeListener
+        fun getHandler(id: Int): WebViewHandler? = handlers[id]
 
         fun getUrl(): String = activeUrl
 
         fun setUrl(url: String) {
             activeUrl = url
         }
+    }
 
-        fun getSharedWebView(): WebView? = sharedWebView
-
-        fun markShowRequested() {
-            pendingShow = true
-        }
-
-        fun showIfReady() {
-            if (sharedLoaded) {
-                sharedWebView?.evaluateJavascript("startAdBreak()", null)
-                pendingShow = false
-            }
-        }
+    init {
+        handlerId = nextId++
+        handlers[handlerId] = this
     }
 
     public fun setListener(listener: WebViewListener) {
         this.listener = listener
-        bindListener(listener)
+    }
+
+    public fun setCloseAction(action: (() -> Unit)?) {
+        closeAction = action
     }
 
     @SuppressLint("SetJavaScriptEnabled")
     public fun load() {
         activity.runOnUiThread {
-            if (webView != null || sharedWebView != null) return@runOnUiThread
+            if (webView != null) return@runOnUiThread
 
             WebView.setWebContentsDebuggingEnabled(true)
 
@@ -113,11 +105,10 @@ class WebViewHandler(private val activity: Activity) {
                 webViewClient = object : WebViewClient() {
                     override fun onPageFinished(view: WebView?, url: String?) {
                         isPageLoaded = true
-                        sharedLoaded = true
                         // TODO this event should wait for the sax sdk to be initialised and the ad to be loaded once we have sax sdk implemented
                         listener?.onWebViewLoaded()
                         if (pendingShow) {
-                            showIfReady()
+                            startAdBreakIfReady()
                         }
                     }
 
@@ -155,16 +146,25 @@ class WebViewHandler(private val activity: Activity) {
                 loadUrl(WebViewHandler.getUrl())
             }
             webView = created
-            sharedWebView = created
         }
     }
 
     public fun render() {
         activity.runOnUiThread {
             val intent = Intent(activity, AdActivity::class.java)
-            markShowRequested()
+            intent.putExtra("webview_id", handlerId)
+            pendingShow = true
             activity.startActivity(intent)
+            startAdBreakIfReady()
         }
+    }
+
+    fun getWebView(): WebView? = webView
+
+    fun startAdBreakIfReady() {
+        if (!isPageLoaded) return
+        webView?.evaluateJavascript("startAdBreak()", null)
+        pendingShow = false
     }
 
     public fun showCloseButton() {
@@ -183,10 +183,7 @@ class WebViewHandler(private val activity: Activity) {
 
     fun close() {
         activity.runOnUiThread {
-            webView?.let {
-                (it.parent as? ViewGroup)?.removeView(it)
-                it.destroy()
-            }
+            webView?.let { (it.parent as? ViewGroup)?.removeView(it) }
 
             webView = null
             isPageLoaded = false
@@ -197,6 +194,7 @@ class WebViewHandler(private val activity: Activity) {
     private inner class WebAppBridge {
         @JavascriptInterface
         fun closeWebView() {
+            closeAction?.invoke()
             close()
         }
 

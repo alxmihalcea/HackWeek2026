@@ -19,8 +19,6 @@ import android.widget.FrameLayout
 
 class AdActivity : Activity() {
     private var webView: WebView? = null
-    private val listener: WebViewListener?
-        get() = WebViewHandler.getListener()
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,12 +30,19 @@ class AdActivity : Activity() {
         )
         window.decorView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
 
-        webView = WebViewHandler.getSharedWebView()
+        val handlerId = intent?.getIntExtra("webview_id", -1) ?: -1
+        val handler = WebViewHandler.getHandler(handlerId)
+        if (handler == null) {
+            finish()
+            return
+        }
+
+        handler.setCloseAction { finish() }
+
+        webView = handler.getWebView()
         if (webView == null) {
-            // Fallback: create once via handler and reuse
-            WebViewHandler(this).setListener(listener ?: return)
-            WebViewHandler(this).load()
-            webView = WebViewHandler.getSharedWebView()
+            handler.load()
+            webView = handler.getWebView()
         }
 
         webView?.let { current ->
@@ -47,7 +52,7 @@ class AdActivity : Activity() {
             )
             (current.parent as? ViewGroup)?.removeView(current)
             setContentView(current)
-            WebViewHandler.showIfReady()
+            handler.startAdBreakIfReady()
         }
     }
 
@@ -55,7 +60,10 @@ class AdActivity : Activity() {
         super.onDestroy()
         webView?.let { (it.parent as? ViewGroup)?.removeView(it) }
         webView = null
-        listener?.onWebviewClosed()
+    }
+
+    override fun onBackPressed() {
+        // Disable back while ad is showing.
     }
 
     private inner class WebAppBridge {
