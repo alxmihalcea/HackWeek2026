@@ -6,7 +6,7 @@ import android.os.Looper
 
 class InterstitialHandler(activity: Activity) : AdHandler(activity) {
     val timerHandler = Handler(Looper.getMainLooper())
-    val timeUntilShowSkipButton = 15_000L
+    val timeUntilShowSkipButton = 0L
 
     override fun renderAd() {
         super.renderAd()

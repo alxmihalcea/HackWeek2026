@@ -29,6 +29,7 @@ class WebViewHandler(private val activity: Activity) {
     private var listener: WebViewListener? = null
     private var isPageLoaded = false
     private var pendingShow = false
+    private var hasStartedAdBreak = false
     private val handlerId: Int
     private var closeAction: (() -> Unit)? = null
 
@@ -162,7 +163,8 @@ class WebViewHandler(private val activity: Activity) {
     fun getWebView(): WebView? = webView
 
     fun startAdBreakIfReady() {
-        if (!isPageLoaded) return
+        if (!isPageLoaded || hasStartedAdBreak) return
+        hasStartedAdBreak = true
         webView?.evaluateJavascript("startAdBreak()", null)
         pendingShow = false
     }
@@ -187,6 +189,7 @@ class WebViewHandler(private val activity: Activity) {
 
             webView = null
             isPageLoaded = false
+            hasStartedAdBreak = false
             listener?.onWebviewClosed()
         }
     }

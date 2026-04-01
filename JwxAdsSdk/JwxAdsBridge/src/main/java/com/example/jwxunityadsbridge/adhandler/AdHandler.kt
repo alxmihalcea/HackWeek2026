@@ -16,6 +16,7 @@ open class AdHandler(activity: Activity) : WebViewListener {
 
     protected var webViewHandler: WebViewHandler = WebViewHandler(activity);
     private var isWebViewLoaded = false
+    private var isShowing = false
 
     init {
         webViewHandler.setListener(this)
@@ -38,6 +39,10 @@ open class AdHandler(activity: Activity) : WebViewListener {
             // TODO("Send webview not loaded event")
             return
         }
+        if (isShowing) {
+            return
+        }
+        isShowing = true
 
         webViewHandler.render()
     }
@@ -49,6 +54,7 @@ open class AdHandler(activity: Activity) : WebViewListener {
 
     override fun onWebviewClosed() {
         isWebViewLoaded = false
+        isShowing = false
         listeners.forEach { it.onAdStopped() }
     }
 
